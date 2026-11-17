@@ -1,0 +1,142 @@
+/* SentinelSOC Custom Stylesheet - CS50 Final Project */
+
+:root {
+    --bg-darker: #0d1117;
+    --bg-card: #161b22;
+    --border-color: #30363d;
+    --cyber-blue: #58a6ff;
+    --cyber-cyan: #39d353;
+    --cyber-purple: #bc8cff;
+    --cyber-orange: #f0883e;
+    --cyber-red: #ff7b72;
+}
+
+body {
+    background-color: #0b0e14;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    color: #e6edf3;
+}
+
+.bg-darker {
+    background-color: var(--bg-darker) !important;
+}
+
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.card-header {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+}
+
+.text-cyber-blue {
+    color: var(--cyber-blue) !important;
+}
+
+.text-cyber-green {
+    color: var(--cyber-cyan) !important;
+}
+
+.text-cyber-cyan {
+    color: #56d364 !important;
+}
+
+.btn-outline-cyan {
+    color: #3fb950;
+    border-color: #3fb950;
+}
+
+.btn-outline-cyan:hover {
+    background-color: #238636;
+    border-color: #2ea043;
+    color: #ffffff;
+}
+
+.metric-card {
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--cyber-blue);
+}
+
+.font-monospace {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace !important;
+}
+
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: #c9d1d9;
+    --bs-table-border-color: var(--border-color);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.threat-meter {
+    height: 12px;
+    border-radius: 6px;
+    background-color: #21262d;
+    overflow: hidden;
+}
+
+.threat-meter-bar {
+    height: 100%;
+    transition: width 0.6s ease;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 28px;
+    border-left: 2px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--cyber-blue);
+    border: 2px solid var(--bg-card);
+}
+
+.timeline-item.created::before {
+    background-color: #238636;
+}
+
+.timeline-item.ioc-added::before {
+    background-color: #f0883e;
+}
+
+.timeline-item.status-change::before {
+    background-color: #bc8cff;
+}
+
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    padding: 0.35em 0.65em;
+}
+
+pre, code {
+    background-color: #161b22;
+    color: #79c0ff;
+    padding: 2px 5px;
+    border-radius: 4px;
+}
+
+pre {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+}

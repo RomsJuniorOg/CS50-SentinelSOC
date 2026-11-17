@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+
+{% block title %}Audit Trail & Activity Logs{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+    <div>
+        <h2 class="h4 mb-1 text-cyber-blue">
+            <i class="fa-solid fa-clock-rotate-left me-2 text-cyber-cyan"></i>Security Audit Trail
+        </h2>
+        <p class="text-muted small mb-0">Immutable tracking of investigator actions, authentications, and incident mutations</p>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr class="small text-muted text-uppercase">
+                        <th scope="col" class="ps-3">Log ID</th>
+                        <th scope="col">Timestamp</th>
+                        <th scope="col">Action Type</th>
+                        <th scope="col">Details & Description</th>
+                        <th scope="col">Analyst User</th>
+                        <th scope="col" class="pe-3">Origin IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for l in logs %}
+                    <tr>
+                        <td class="ps-3 font-monospace text-muted small">#{{ l.id }}</td>
+                        <td class="font-monospace small text-muted">{{ l.created_at|format_dt }}</td>
+                        <td>
+                            <span class="badge bg-secondary font-monospace" style="font-size: 0.75rem;">{{ l.action }}</span>
+                        </td>
+                        <td class="small text-light">{{ l.details }}</td>
+                        <td class="small">
+                            <span class="text-cyber-blue fw-semibold">{{ l.full_name or l.username or 'System' }}</span>
+                        </td>
+                        <td class="font-monospace small text-muted pe-3">{{ l.ip_address }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No activity logs recorded yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

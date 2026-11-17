@@ -1,0 +1,124 @@
+{% extends "layout.html" %}
+
+{% block title %}Create Incident{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="h4 mb-0 text-cyber-blue">
+                <i class="fa-solid fa-file-circle-plus me-2 text-cyber-cyan"></i>Create Security Incident
+            </h2>
+            <a href="{{ url_for('incidents') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Incidents
+            </a>
+        </div>
+
+        <div class="card shadow-lg">
+            <div class="card-body p-4">
+                <form action="{{ url_for('incident_new') }}" method="POST">
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label text-muted small fw-semibold">Incident Title *</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="title" name="title" required placeholder="e.g. Suspicious PowerShell Execution on Domain Controller">
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label text-muted small fw-semibold">Detailed Description *</label>
+                        <textarea class="form-control bg-dark text-light border-secondary" id="description" name="description" rows="4" required placeholder="Describe what triggered this alert, host symptoms, initial evidence..."></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <!-- Severity -->
+                        <div class="col-md-6">
+                            <label for="severity" class="form-label text-muted small fw-semibold">Severity Level *</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="severity" name="severity" required>
+                                <option value="Low">Low (Informational, single policy probe)</option>
+                                <option value="Medium" selected>Medium (Suspicious probe, isolated malware alert)</option>
+                                <option value="High">High (Active brute-force, confirmed internal compromise)</option>
+                                <option value="Critical">Critical (Ransomware, Domain Controller access, Data Breach)</option>
+                            </select>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="col-md-6">
+                            <label for="category" class="form-label text-muted small fw-semibold">Attack Category *</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="category" name="category" required>
+                                <option value="Malware">Malware / Ransomware</option>
+                                <option value="Phishing">Phishing / Social Engineering</option>
+                                <option value="Unauthorized Access">Unauthorized Access / Credential Abuse</option>
+                                <option value="Web Attack">Web Attack (SQLi, XSS, RCE)</option>
+                                <option value="Denial of Service">Denial of Service (DoS/DDoS)</option>
+                                <option value="Data Exfiltration">Data Exfiltration</option>
+                                <option value="Suspicious Activity" selected>Suspicious Activity</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <!-- Affected Asset -->
+                        <div class="col-md-6">
+                            <label for="affected_asset" class="form-label text-muted small fw-semibold">Affected Asset / Host *</label>
+                            <input type="text" class="form-control bg-dark text-light border-secondary" id="affected_asset" name="affected_asset" required placeholder="e.g. DC01.corp.internal / 10.0.0.15">
+                        </div>
+
+                        <!-- Assigned Analyst -->
+                        <div class="col-md-6">
+                            <label for="assigned_to" class="form-label text-muted small fw-semibold">Assign To Analyst</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="assigned_to" name="assigned_to">
+                                <option value="">-- Unassigned --</option>
+                                {% for u in users %}
+                                <option value="{{ u.id }}">{{ u.full_name }} ({{ u.username }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- MITRE ATT&CK Mapping -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="mitre_tactic" class="form-label text-muted small fw-semibold">MITRE ATT&CK Tactic</label>
+                            <select class="form-select bg-dark text-light border-secondary" id="mitre_tactic" name="mitre_tactic">
+                                <option value="Reconnaissance">Reconnaissance (TA0043)</option>
+                                <option value="Resource Development">Resource Development (TA0042)</option>
+                                <option value="Initial Access" selected>Initial Access (TA0001)</option>
+                                <option value="Execution">Execution (TA0002)</option>
+                                <option value="Persistence">Persistence (TA0003)</option>
+                                <option value="Privilege Escalation">Privilege Escalation (TA0004)</option>
+                                <option value="Defense Evasion">Defense Evasion (TA0005)</option>
+                                <option value="Credential Access">Credential Access (TA0006)</option>
+                                <option value="Discovery">Discovery (TA0007)</option>
+                                <option value="Lateral Movement">Lateral Movement (TA0008)</option>
+                                <option value="Collection">Collection (TA0009)</option>
+                                <option value="Command and Control">Command and Control (TA0011)</option>
+                                <option value="Exfiltration">Exfiltration (TA0010)</option>
+                                <option value="Impact">Impact (TA0040)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="mitre_technique" class="form-label text-muted small fw-semibold">MITRE Technique</label>
+                            <input type="text" class="form-control bg-dark text-light border-secondary" id="mitre_technique" name="mitre_technique" value="T1078 - Valid Accounts" placeholder="e.g. T1110 - Brute Force">
+                        </div>
+                    </div>
+
+                    <!-- Initial IOC Observable -->
+                    <div class="mb-4">
+                        <label for="initial_ioc" class="form-label text-muted small fw-semibold">Initial IOC / Observable (Optional)</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary font-monospace" id="initial_ioc" name="initial_ioc" placeholder="IP address, domain, file hash, or URL (will be automatically enriched)">
+                        <div class="form-text text-muted small">Our Threat Intelligence engine will score and classify this observable upon intake.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('incidents') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-outline-cyan">
+                            <i class="fa-solid fa-check me-1"></i> Create Incident
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

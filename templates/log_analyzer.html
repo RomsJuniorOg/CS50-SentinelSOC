@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+
+{% block title %}Log Analyzer & Anomaly Detection{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+    <div>
+        <h2 class="h4 mb-1 text-cyber-blue">
+            <i class="fa-solid fa-file-code me-2 text-warning"></i>Security Log Analyzer
+        </h2>
+        <p class="text-muted small mb-0">Rule-based parsing & detection for web application attacks (SQLi, Traversal) and authentication brute-force</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Log Input Form -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fa-solid fa-terminal me-2 text-cyber-blue"></i>Raw Log Ingestion</span>
+            </div>
+            <div class="card-body p-4 d-flex flex-column">
+                <form action="{{ url_for('log_analyzer') }}" method="POST" class="d-flex flex-column flex-grow-1">
+                    <div class="mb-3 flex-grow-1 d-flex flex-column">
+                        <label for="logs" class="form-label text-muted small fw-semibold">Paste Log Lines (Apache, Nginx, or Linux Auth.log)</label>
+                        <textarea class="form-control bg-dark text-light border-secondary font-monospace small flex-grow-1" id="logs" name="logs" rows="12" required placeholder="Paste access logs or auth logs here...">{{ raw_logs }}</textarea>
+                    </div>
+
+                    <!-- Preset Samples Buttons -->
+                    <div class="mb-3">
+                        <span class="text-muted small d-block mb-2"><i class="fa-solid fa-flask me-1"></i> Preload Attack Scenarios:</span>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadSSHAttack()">
+                                <i class="fa-solid fa-key me-1"></i> SSH Brute-Force
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadWebAttack()">
+                                <i class="fa-solid fa-globe me-1"></i> Web SQLi & Traversal
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="loadPHP2Shell()">
+                                <i class="fa-solid fa-bug me-1"></i> PHP2Shell RCE Probe
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-cyan w-100 py-2">
+                        <i class="fa-solid fa-microchip me-1"></i> Execute Parser & Detection Rules
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="col-lg-7">
+        {% if analysis %}
+        <!-- Summary Stats Card -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fa-solid fa-chart-column me-2 text-cyber-blue"></i>Ingestion & Parsing Metrics</span>
+                <span class="badge bg-secondary font-monospace">{{ analysis.total_lines_processed }} Lines Read</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 text-center">
+                    <div class="col-3">
+                        <div class="p-2 rounded bg-dark border border-secondary">
+                            <h4 class="fw-bold mb-0 text-cyber-blue">{{ analysis.total_parsed_entries }}</h4>
+                            <span class="text-muted small" style="font-size: 0.75rem;">Parsed Records</span>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-2 rounded bg-dark border border-secondary">
+                            <h4 class="fw-bold mb-0 text-warning">{{ analysis.summary.failed_logins }}</h4>
+                            <span class="text-muted small" style="font-size: 0.75rem;">Failed Logins</span>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-2 rounded bg-dark border border-secondary">
+                            <h4 class="fw-bold mb-0 text-danger">{{ analysis.summary.sqli_count }}</h4>
+                            <span class="text-muted small" style="font-size: 0.75rem;">SQLi Attempts</span>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-2 rounded bg-dark border border-secondary">
+                            <h4 class="fw-bold mb-0 text-info">{{ analysis.summary.traversal_count }}</h4>
+                            <span class="text-muted small" style="font-size: 0.75rem;">Path Traversals</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detection Alerts -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fa-solid fa-triangle-exclamation me-2 text-danger"></i>Correlation Alerts Generated</span>
+                <span class="badge bg-danger font-monospace">{{ analysis.alerts_generated|length }} Threats</span>
+            </div>
+            <div class="card-body p-3">
+                {% for alert in analysis.alerts_generated %}
+                <div class="card border-{% if alert.severity == 'Critical' %}danger{% elif alert.severity == 'High' %}warning{% else %}primary{% endif %} mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center py-2 bg-dark">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge {{ alert.severity|severity_badge }}">{{ alert.severity }}</span>
+                            <strong class="text-light">{{ alert.title }}</strong>
+                        </div>
+                        <span class="badge bg-secondary font-monospace" style="font-size: 0.7rem;">{{ alert.mitre_technique }}</span>
+                    </div>
+                    <div class="card-body p-3 small">
+                        <p class="text-light mb-2">{{ alert.description }}</p>
+                        
+                        <div class="p-2 rounded bg-dark border border-secondary mb-3">
+                            <span class="text-muted fw-semibold">Attacker IP:</span>
+                            <code class="font-monospace text-cyber-blue">{{ alert.source_ip }}</code>
+                        </div>
+
+                        <div class="p-2 rounded bg-darker border border-secondary mb-3">
+                            <span class="text-cyber-cyan fw-semibold">Remediation:</span> {{ alert.recommendation }}
+                        </div>
+
+                        <!-- 1-Click Promote to Incident Form -->
+                        <form action="{{ url_for('incident_new') }}" method="POST">
+                            <input type="hidden" name="title" value="{{ alert.title }}">
+                            <input type="hidden" name="description" value="{{ alert.description }} Remediations: {{ alert.recommendation }}">
+                            <input type="hidden" name="severity" value="{{ alert.severity }}">
+                            <input type="hidden" name="category" value="{{ alert.category }}">
+                            <input type="hidden" name="affected_asset" value="Host/Perimeter (Source: {{ alert.source_ip }})">
+                            <input type="hidden" name="mitre_tactic" value="{{ alert.mitre_tactic }}">
+                            <input type="hidden" name="mitre_technique" value="{{ alert.mitre_technique }}">
+                            <input type="hidden" name="initial_ioc" value="{{ alert.source_ip }}">
+                            
+                            <button type="submit" class="btn btn-sm btn-outline-cyan">
+                                <i class="fa-solid fa-bullhorn me-1"></i> Escalate to Incident Case
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="fa-solid fa-circle-check fs-2 text-success mb-2 d-block"></i>
+                    No high-fidelity attack signatures or brute force patterns matched in provided logs.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="card h-100 d-flex align-items-center justify-content-center p-5 text-center text-muted">
+            <i class="fa-solid fa-file-magnifying-glass fa-3x mb-3 text-secondary"></i>
+            <h5 class="text-light">No Logs Ingested Yet</h5>
+            <p class="small mb-0" style="max-width: 420px;">Paste log contents or click one of the preset attack scenario buttons on the left to test the correlation rules and detection engine.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function loadSSHAttack() {
+    const sample = `Nov 16 22:10:01 web01 sshd[28410]: Failed password for root from 198.51.100.44 port 48122 ssh2
+Nov 16 22:10:04 web01 sshd[28412]: Failed password for invalid user admin from 198.51.100.44 port 48124 ssh2
+Nov 16 22:10:07 web01 sshd[28415]: Failed password for invalid user test from 198.51.100.44 port 48126 ssh2
+Nov 16 22:10:10 web01 sshd[28418]: Failed password for invalid user deploy from 198.51.100.44 port 48128 ssh2
+Nov 16 22:10:13 web01 sshd[28420]: Failed password for invalid user oracle from 198.51.100.44 port 48130 ssh2
+Nov 16 22:10:18 web01 sshd[28424]: Failed password for root from 198.51.100.44 port 48132 ssh2`;
+    document.getElementById('logs').value = sample;
+}
+
+function loadWebAttack() {
+    const sample = `203.0.113.88 - - [16/Nov/2026:22:12:01 +0000] "GET /products.php?id=1' UNION SELECT null,username,password FROM users-- HTTP/1.1" 200 4812 "-" "Mozilla/5.0"
+203.0.113.88 - - [16/Nov/2026:22:12:05 +0000] "GET /login.php?user=' OR '1'='1 HTTP/1.1" 200 3120 "-" "sqlmap/1.5"
+203.0.113.88 - - [16/Nov/2026:22:12:09 +0000] "GET /view.php?file=../../../../etc/passwd HTTP/1.1" 404 280 "-" "Mozilla/5.0"
+203.0.113.88 - - [16/Nov/2026:22:12:14 +0000] "GET /download.php?page=..%2F..%2Fwin.ini HTTP/1.1" 403 190 "-" "nikto/2.1"`;
+    document.getElementById('logs').value = sample;
+}
+
+function loadPHP2Shell() {
+    const sample = `198.51.100.77 - - [16/Nov/2026:22:13:30 +0000] "GET /index.php?=PHPE9568F34-D428-11d2-A769-00AA001ACF42 HTTP/1.1" 200 2520 "-" "php2shell-scan/1.2"
+198.51.100.77 - - [16/Nov/2026:22:13:35 +0000] "POST /upload.php?action=php2shell HTTP/1.1" 403 450 "-" "shellflow-php2shell"
+198.51.100.77 - - [16/Nov/2026:22:13:40 +0000] "GET /admin.php?=PHPB8B5F2A0-3C92-11d3-A3A9-4C7B08C10000 HTTP/1.1" 200 1820 "-" "ImpervaPHP2ShellChecker"`;
+    document.getElementById('logs').value = sample;
+}
+</script>
+{% endblock %}

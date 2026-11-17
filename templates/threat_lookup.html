@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+
+{% block title %}Threat Intelligence Lookup{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+    <div>
+        <h2 class="h4 mb-1 text-cyber-blue">
+            <i class="fa-solid fa-crosshairs me-2 text-cyber-cyan"></i>Threat Intelligence Lookup
+        </h2>
+        <p class="text-muted small mb-0">Evaluate risk, Shannon entropy, heuristic scoring, and containment advice for any observable</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Input Form & Sample Demos -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <i class="fa-solid fa-magnifying-glass me-2 text-cyber-blue"></i>Observable Query
+            </div>
+            <div class="card-body p-4">
+                <form action="{{ url_for('threat_lookup') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="ioc" class="form-label text-muted small fw-semibold">Indicator of Compromise (IOC)</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary font-monospace" id="ioc" name="ioc" value="{{ query_val }}" required placeholder="IPv4, Domain, URL, MD5, or SHA256...">
+                        <div class="form-text text-muted small">Supports IPv4 (internal & external), fully-qualified domains, full URLs, and MD5/SHA256 hashes.</div>
+                    </div>
+                    <button type="submit" class="btn btn-outline-cyan w-100 py-2">
+                        <i class="fa-solid fa-bolt me-1"></i> Analyze Observable
+                    </button>
+                </form>
+
+                <hr class="border-secondary my-4">
+
+                <!-- Quick Samples -->
+                <div class="small">
+                    <span class="text-muted fw-semibold d-block mb-2"><i class="fa-solid fa-vial me-1"></i> Quick Test Observables:</span>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary font-monospace" onclick="setIOC('45.142.214.18')">Cobalt Strike IP</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary font-monospace" onclick="setIOC('login-microsoft-auth-verify.com')">Phishing Domain</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary font-monospace" onclick="setIOC('ed01ebf83334a1bfa188f3071f0947aa586c7da3cb7b58410e767d8e84a1e5d1')">WannaCry SHA256</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary font-monospace" onclick="setIOC('192.168.1.1')">Internal RFC1918</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary font-monospace" onclick="setIOC('https://malicious-cdn.xyz/download/beacon.ps1')">Suspicious URL</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Analysis Result Card -->
+    <div class="col-lg-7">
+        {% if result %}
+        <div class="card shadow-lg border-{% if result.reputation == 'Malicious' %}danger{% elif result.reputation == 'Suspicious' %}warning{% else %}success{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="fa-solid fa-shield-virus me-2 text-{% if result.reputation == 'Malicious' %}danger{% elif result.reputation == 'Suspicious' %}warning{% else %}success{% endif %}"></i>
+                    Intelligence Assessment Report
+                </span>
+                <span class="badge {{ result.reputation|reputation_badge }} fs-6">{{ result.reputation }}</span>
+            </div>
+            <div class="card-body p-4">
+                <!-- Observable Header -->
+                <div class="p-3 rounded bg-dark border border-secondary mb-3">
+                    <div class="small text-muted mb-1 text-uppercase">Queried Observable ({{ result.type }})</div>
+                    <code class="fs-6 font-monospace text-break user-select-all">{{ result.value }}</code>
+                </div>
+
+                <!-- Threat Meter -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small text-muted fw-semibold">Calculated Threat Score</span>
+                        <span class="font-monospace fw-bold fs-5 text-{% if result.threat_score >= 70 %}danger{% elif result.threat_score >= 40 %}warning{% else %}success{% endif %}">
+                            {{ result.threat_score }} / 100
+                        </span>
+                    </div>
+                    <div class="threat-meter" style="height: 16px;">
+                        <div class="threat-meter-bar {% if result.threat_score >= 70 %}bg-danger{% elif result.threat_score >= 40 %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ result.threat_score }}%;"></div>
+                    </div>
+                </div>
+
+                <!-- Risk Factors -->
+                <div class="mb-4">
+                    <h6 class="text-cyber-blue small fw-semibold text-uppercase mb-2">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Risk Factors & Behavioral Signals
+                    </h6>
+                    <ul class="list-group list-group-flush bg-transparent">
+                        {% for factor in result.risk_factors %}
+                        <li class="list-group-item bg-transparent text-light border-secondary px-0 py-2 small d-flex align-items-start gap-2">
+                            <i class="fa-solid fa-chevron-right text-warning mt-1"></i>
+                            <div>{{ factor }}</div>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item bg-transparent text-muted border-secondary px-0 py-2 small">
+                            <i class="fa-solid fa-check text-success me-1"></i> No suspicious signals or high-risk heuristics detected.
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Recommended Actions -->
+                <div class="p-3 rounded bg-darker border border-secondary">
+                    <h6 class="text-cyber-cyan small fw-semibold text-uppercase mb-1">
+                        <i class="fa-solid fa-hand-holding-hand me-1"></i> Containment & Remediation Recommendation
+                    </h6>
+                    <p class="small text-light mb-0">{{ result.recommendation }}</p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card h-100 d-flex align-items-center justify-content-center p-5 text-center text-muted">
+            <i class="fa-solid fa-radar fa-3x mb-3 text-secondary"></i>
+            <h5 class="text-light">Awaiting Observable Input</h5>
+            <p class="small mb-0" style="max-width: 400px;">Enter an IP address, domain name, payload URL, or MD5/SHA256 file hash on the left to trigger the Threat Intelligence engine.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setIOC(value) {
+    const input = document.getElementById('ioc');
+    if (input) {
+        input.value = value;
+    }
+}
+</script>
+{% endblock %}
