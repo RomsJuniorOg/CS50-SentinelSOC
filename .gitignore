@@ -43,3 +43,7 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Presentation & Temporary Assets
+presentation_assets/
+cs50-sentinelsoc/
