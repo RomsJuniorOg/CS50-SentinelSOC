@@ -1,6 +1,6 @@
 # SentinelSOC - Security Operations Center & Threat Intelligence Platform
 
-#### Video Demo: <https://youtu.be/e3RxdZMkYoA>
+#### Video Demo: <https://youtu.be/D_rT1WptuVw>
 
 ---
 
@@ -262,4 +262,4 @@ As required by Harvard CS50:
 - Prepare a short video overview (up to 3 minutes in length).
 - In the video, state your name, your city and country, the title of your project (**SentinelSOC**), and demonstrate the application's key features: logging in, walking through the dashboard, creating an incident, looking up an IOC in the Threat Intelligence tool, analyzing a raw log in the Log Analyzer, and exporting a case.
 - Upload your recording to YouTube as **Public** or **Unlisted**.
-- Video link set: `<https://youtu.be/e3RxdZMkYoA>`. Ready for final submission!
+- Video link set: `<https://youtu.be/D_rT1WptuVw>`. Ready for final submission!
